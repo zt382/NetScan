@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}漏洞管理 - 网络安全资产扫描系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-bug"></i> 漏洞管理</h2>
+    <div class="breadcrumb-text">查看和管理已发现的安全漏洞</div>
+</div>
+
+<!-- 筛选栏 -->
+<div class="card card-custom mb-4">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted">筛选：</span>
+            <a href="/vulns" class="btn btn-sm {% if not current_level %}btn-primary{% else %}btn-outline-secondary{% endif %}">全部</a>
+            <a href="/vulns?level=严重" class="btn btn-sm {% if current_level == '严重' %}btn-danger{% else %}btn-outline-danger{% endif %}">严重</a>
+            <a href="/vulns?level=高危" class="btn btn-sm {% if current_level == '高危' %}btn-danger{% else %}btn-outline-danger{% endif %}">高危</a>
+            <a href="/vulns?level=中危" class="btn btn-sm {% if current_level == '中危' %}btn-warning{% else %}btn-outline-warning{% endif %}">中危</a>
+            <a href="/vulns?level=低危" class="btn btn-sm {% if current_level == '低危' %}btn-info{% else %}btn-outline-info{% endif %}">低危</a>
+            <div class="ms-auto d-flex gap-2">
+                <input type="text" class="form-control form-control-sm" id="vulnSearch"
+                       placeholder="搜索漏洞名称..." style="width:200px;" oninput="filterVulns()">
+                <a href="/api/export/vulns{% if current_level %}?level={{ current_level }}{% endif %}" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-download"></i> 导出CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 漏洞列表 -->
+<div class="card card-custom">
+    <div class="card-body">
+        {% if vulns %}
+        <div class="table-responsive">
+            <table class="table table-custom table-hover" id="vulnTable">
+                <thead>
+                    <tr>
+                        <th>序号</th><th>IP地址</th><th>漏洞名称</th><th>等级</th>
+                        <th>描述</th><th>修复建议</th><th>状态</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for v in vulns %}
+                <tr class="vuln-row">
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ v.ip }}</strong></td>
+                    <td><strong>{{ v.vuln_name }}</strong></td>
+                    <td>
+                        {% if v.vuln_level == '严重' %}<span class="badge badge-critical">严重</span>
+                        {% elif v.vuln_level == '高危' %}<span class="badge badge-high">高危</span>
+                        {% elif v.vuln_level == '中危' %}<span class="badge badge-medium">中危</span>
+                        {% else %}<span class="badge badge-low">低危</span>{% endif %}
+                    </td>
+                    <td style="max-width:250px;" title="{{ v.vuln_desc }}">{{ v.vuln_desc[:60] }}{% if v.vuln_desc|length > 60 %}...{% endif %}</td>
+                    <td style="max-width:250px;" title="{{ v.vuln_solution }}">{{ v.vuln_solution[:60] }}{% if v.vuln_solution|length > 60 %}...{% endif %}</td>
+                    <td>
+                        {% if v.status == '已修复' %}<span class="badge bg-success">已修复</span>
+                        {% else %}<span class="badge bg-warning text-dark">未修复</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if v.status != '已修复' %}
+                        <button class="btn btn-outline-success btn-sm" onclick="markFixed({{ v.id }}, this)">
+                            <i class="bi bi-check"></i> 修复
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-shield-check" style="font-size:48px;color:#27ae60;"></i>
+            <p class="mt-3 text-muted">暂未发现漏洞</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterVulns() {
+    const keyword = document.getElementById('vulnSearch').value.toLowerCase();
+    document.querySelectorAll('.vuln-row').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(keyword) ? '' : 'none';
+    });
+}
+
+function markFixed(vulnId, btn) {
+    if (!confirm('确认将该漏洞标记为已修复？')) return;
+    fetch('/api/vulns/' + vulnId + '/status', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: '已修复'})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            btn.closest('tr').querySelector('.badge').outerHTML = '<span class="badge bg-success">已修复</span>';
+            btn.remove();
+        }
+    });
+}
+</script>
+{% endblock %}

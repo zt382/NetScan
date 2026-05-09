@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}扫描任务 - 网络安全资产扫描系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-list-task"></i> 扫描任务</h2>
+    <div class="breadcrumb-text">查看历史扫描任务记录</div>
+</div>
+
+<div class="card card-custom">
+    <div class="card-body">
+        {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-custom table-hover">
+                <thead>
+                    <tr><th>任务ID</th><th>任务名称</th><th>目标</th><th>类型</th><th>状态</th><th>进度</th><th>结果摘要</th><th>创建时间</th></tr>
+                </thead>
+                <tbody>
+                {% for t in tasks %}
+                <tr>
+                    <td>#{{ t.id }}</td>
+                    <td><strong>{{ t.task_name }}</strong></td>
+                    <td>{{ t.target }}</td>
+                    <td><span class="badge bg-info">{{ t.scan_type }}</span></td>
+                    <td>
+                        {% if t.status == '已完成' %}<span class="badge bg-success">已完成</span>
+                        {% elif t.status == '执行中' %}<span class="badge bg-warning text-dark">执行中</span>
+                        {% elif t.status == '已停止' %}<span class="badge bg-secondary">已停止</span>
+                        {% elif t.status == '失败' %}<span class="badge bg-danger">失败</span>
+                        {% else %}<span class="badge bg-secondary">{{ t.status }}</span>{% endif %}
+                    </td>
+                    <td>
+                        <div class="progress" style="height:6px;width:80px;">
+                            <div class="progress-bar bg-success" style="width:{{ t.progress }}%"></div>
+                        </div>
+                        <small>{{ t.progress }}%</small>
+                    </td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ t.result_summary }}">{{ t.result_summary or '-' }}</td>
+                    <td style="white-space:nowrap;">{{ t.created_time }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size:48px;color:#ddd;"></i>
+            <p class="mt-3 text-muted">暂无扫描任务记录</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}仪表盘 - 网络安全资产扫描系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-speedometer2"></i> 安全态势仪表盘</h2>
+    <div class="breadcrumb-text">实时掌握网络安全资产与风险状况</div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-custom">
+            <div class="stat-card">
+                <div class="stat-icon text-primary"><i class="bi bi-hdd-network"></i></div>
+                <div class="stat-num text-primary" id="statAssets">{{ stats['资产总数'] }}</div>
+                <div class="stat-label">资产总数</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom">
+            <div class="stat-card">
+                <div class="stat-icon text-success"><i class="bi bi-pc-display"></i></div>
+                <div class="stat-num text-success" id="statOnline">{{ stats['在线资产'] }}</div>
+                <div class="stat-label">在线资产</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom">
+            <div class="stat-card">
+                <div class="stat-icon text-warning"><i class="bi bi-plug"></i></div>
+                <div class="stat-num text-warning" id="statPorts">{{ stats['开放端口'] }}</div>
+                <div class="stat-label">开放端口</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom">
+            <div class="stat-card">
+                <div class="stat-icon text-danger"><i class="bi bi-bug"></i></div>
+                <div class="stat-num text-danger" id="statVulns">{{ stats['漏洞总数'] }}</div>
+                <div class="stat-label">漏洞总数</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 漏洞分布 + 快速扫描 -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h5 class="card-title mb-3"><i class="bi bi-pie-chart"></i> 漏洞风险分布</h5>
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="p-3 rounded" style="background:#fdf0ed;">
+                            <div style="font-size:28px;font-weight:700;color:#c0392b;">{{ stats['严重漏洞'] }}</div>
+                            <div style="font-size:12px;color:#999;">严重</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-3 rounded" style="background:#fdf0ed;">
+                            <div style="font-size:28px;font-weight:700;color:#e74c3c;">{{ stats['高危漏洞'] }}</div>
+                            <div style="font-size:12px;color:#999;">高危</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-3 rounded" style="background:#fef9e7;">
+                            <div style="font-size:28px;font-weight:700;color:#f39c12;">{{ stats['中危漏洞'] }}</div>
+                            <div style="font-size:12px;color:#999;">中危</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-3 rounded" style="background:#eaf2f8;">
+                            <div style="font-size:28px;font-weight:700;color:#3498db;">{{ stats['低危漏洞'] }}</div>
+                            <div style="font-size:12px;color:#999;">低危</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h5 class="card-title mb-3"><i class="bi bi-lightning"></i> 快速扫描</h5>
+                <div class="mb-3">
+                    <label class="form-label">扫描目标</label>
+                    <input type="text" class="form-control" id="scanTarget"
+                           placeholder="输入IP地址，如: 192.168.1.0/24 或 192.168.1.1-192.168.1.50">
+                    <div class="form-text">支持格式：单个IP、CIDR网段、IP范围（逗号分隔多个目标）</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">扫描模式</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="scanMode" id="modeQuick" value="快速" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="modeQuick">
+                            <i class="bi bi-lightning"></i> 快速（26端口）
+                        </label>
+                        <input type="radio" class="btn-check" name="scanMode" id="modeMedium" value="中速">
+                        <label class="btn btn-outline-warning btn-sm" for="modeMedium">
+                            <i class="bi bi-lightning-charge"></i> 中速（TOP1000）
+                        </label>
+                        <input type="radio" class="btn-check" name="scanMode" id="modeFull" value="全端口">
+                        <label class="btn btn-outline-danger btn-sm" for="modeFull">
+                            <i class="bi bi-fire"></i> 全端口（65535）
+                        </label>
+                    </div>
+                    <div class="form-text" id="modeHint">快速模式：仅扫描26个常用端口，速度快</div>
+                </div>
+                <div class="d-flex gap-2" id="scanButtons">
+                    <button class="btn btn-scan flex-fill" onclick="startAssetScan()">
+                        <i class="bi bi-radar"></i> 资产扫描
+                    </button>
+                    <button class="btn btn-outline-danger flex-fill" onclick="startVulnScan()">
+                        <i class="bi bi-bug"></i> 漏洞扫描
+                    </button>
+                </div>
+                <!-- 扫描运行中时显示停止按钮 -->
+                <div id="stopArea" class="mt-3" style="display:none;">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded" style="background:#fff5f5;border:1px solid #fecaca;">
+                        <i class="bi bi-arrow-repeat spin text-danger" style="font-size:24px;"></i>
+                        <div class="flex-grow-1">
+                            <div id="dashScanMsg" style="font-size:13px;color:#666;">扫描中...</div>
+                            <div class="progress mt-1" style="height:8px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" id="dashScanBar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <span id="dashScanPct" style="font-size:14px;font-weight:600;color:#333;">0%</span>
+                        <button class="btn btn-danger" id="btnDashStop" onclick="stopScan()">
+                            <i class="bi bi-stop-circle-fill"></i> 停止扫描
+                        </button>
+                    </div>
+                </div>
+                <div id="scanResult" class="mt-2" style="font-size:13px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近任务 + 资产变化 -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h5 class="card-title mb-3"><i class="bi bi-list-task"></i> 最近扫描任务</h5>
+                {% if tasks %}
+                <table class="table table-custom table-hover mb-0">
+                    <thead><tr><th>任务名</th><th>类型</th><th>状态</th><th>时间</th></tr></thead>
+                    <tbody>
+                    {% for t in tasks %}
+                    <tr>
+                        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ t.task_name }}">{{ t.task_name }}</td>
+                        <td><span class="badge bg-info">{{ t.scan_type }}</span></td>
+                        <td>
+                            {% if t.status == '已完成' %}<span class="badge bg-success">已完成</span>
+                            {% elif t.status == '执行中' %}<span class="badge bg-warning text-dark">执行中</span>
+                            {% elif t.status == '已停止' %}<span class="badge bg-secondary">已停止</span>
+                            {% else %}<span class="badge bg-secondary">{{ t.status }}</span>{% endif %}
+                        </td>
+                        <td style="white-space:nowrap;">{{ t.created_time }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center text-muted py-4">暂无扫描任务</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h5 class="card-title mb-3"><i class="bi bi-clock-history"></i> 资产变化记录</h5>
+                {% if changes %}
+                <table class="table table-custom table-hover mb-0">
+                    <thead><tr><th>时间</th><th>IP</th><th>变化</th><th>详情</th></tr></thead>
+                    <tbody>
+                    {% for c in changes %}
+                    <tr>
+                        <td style="white-space:nowrap;">{{ c.scan_time }}</td>
+                        <td>{{ c.ip }}</td>
+                        <td>
+                            {% if c.change_type == '新增' %}<span class="badge bg-success">新增</span>
+                            {% elif c.change_type == '离线' %}<span class="badge bg-danger">离线</span>
+                            {% else %}<span class="badge bg-info">{{ c.change_type }}</span>{% endif %}
+                        </td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.detail }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center text-muted py-4">暂无变化记录</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 扫描模式提示
+document.querySelectorAll('input[name="scanMode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const hints = {
+            '快速': '快速模式：仅扫描26个常用端口，速度最快',
+            '中速': '中速模式：扫描TOP 1000常见端口，较全面',
+            '全端口': '全端口模式：扫描1-65535全部端口，最全面但耗时较长'
+        };
+        document.getElementById('modeHint').textContent = hints[this.value] || '';
+    });
+});
+
+function getScanMode() {
+    const checked = document.querySelector('input[name="scanMode"]:checked');
+    return checked ? checked.value : '快速';
+}
+
+function startAssetScan() {
+    const target = document.getElementById('scanTarget').value.trim();
+    if (!target) { alert('请输入扫描目标IP地址'); return; }
+    const mode = getScanMode();
+    if (mode === '全端口' && !confirm('全端口扫描(1-65535)将消耗较长时间，确认开始？')) return;
+    document.getElementById('scanResult').innerHTML = '<span class="text-info"><i class="bi bi-arrow-repeat spin"></i> 正在启动' + mode + '资产扫描...</span>';
+    fetch('/api/scan/asset', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({target: target, scan_mode: mode})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            document.getElementById('scanResult').innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> ' + data.message + '</span>';
+        } else {
+            document.getElementById('scanResult').innerHTML = '<span class="text-danger"><i class="bi bi-x-circle"></i> ' + data.message + '</span>';
+        }
+    });
+}
+
+function startVulnScan() {
+    const target = document.getElementById('scanTarget').value.trim();
+    document.getElementById('scanResult').innerHTML = '<span class="text-info"><i class="bi bi-arrow-repeat spin"></i> 正在启动漏洞扫描...</span>';
+    fetch('/api/scan/vuln', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({target: target})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            document.getElementById('scanResult').innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> ' + data.message + '</span>';
+        } else {
+            document.getElementById('scanResult').innerHTML = '<span class="text-danger"><i class="bi bi-x-circle"></i> ' + data.message + '</span>';
+        }
+    });
+}
+
+// 停止扫描
+function stopScan() {
+    if (!confirm('确定要停止当前扫描任务吗？已完成的部分会保留。')) return;
+    fetch('/api/scan/stop', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('btnDashStop').disabled = true;
+                document.getElementById('btnDashStop').innerHTML = '<i class="bi bi-hourglass-split"></i> 停止中...';
+            } else {
+                alert(data.message);
+            }
+        });
+}
+
+// 仪表盘扫描状态轮询（同步顶部进度条 + 仪表盘停止区）
+function pollDashScan() {
+    fetch('/api/scan/status').then(r => r.json()).then(data => {
+        const stopArea = document.getElementById('stopArea');
+        const scanBtns = document.getElementById('scanButtons');
+        if (data.running) {
+            stopArea.style.display = 'block';
+            scanBtns.style.display = 'none';
+            document.getElementById('dashScanMsg').textContent = data.message || '扫描中...';
+            document.getElementById('dashScanBar').style.width = data.progress + '%';
+            document.getElementById('dashScanPct').textContent = data.progress + '%';
+            const btn = document.getElementById('btnDashStop');
+            if (data.stop_requested) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 停止中...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-stop-circle-fill"></i> 停止扫描';
+            }
+        } else {
+            stopArea.style.display = 'none';
+            scanBtns.style.display = 'flex';
+        }
+    }).catch(() => {});
+}
+setInterval(pollDashScan, 2000);
+pollDashScan();
+
+// 自动刷新统计
+setInterval(() => {
+    fetch('/api/stats').then(r=>r.json()).then(data => {
+        document.getElementById('statAssets').textContent = data['资产总数'];
+        document.getElementById('statOnline').textContent = data['在线资产'];
+        document.getElementById('statPorts').textContent = data['开放端口'];
+        document.getElementById('statVulns').textContent = data['漏洞总数'];
+    });
+}, 5000);
+</script>
+{% endblock %}

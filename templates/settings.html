@@ -1,0 +1,635 @@
+{% extends "base.html" %}
+{% block title %}系统设置 - 网络安全资产扫描系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-gear"></i> 系统设置</h2>
+    <div class="breadcrumb-text">管理系统配置和漏洞库</div>
+</div>
+
+<div class="row g-4">
+    <!-- 漏洞库管理 -->
+    <div class="col-md-12">
+        <div class="card card-custom">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="bi bi-bug"></i> 漏洞规则库</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshVulnDB()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="showAddRule()">
+                            <i class="bi bi-plus-circle"></i> 添加规则
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" disabled title="已禁用：爬取第三方网站存在法律风险">
+                            <i class="bi bi-cloud-download"></i> CNVD爬取(已禁用)
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="showImportFile()">
+                            <i class="bi bi-file-earmark-arrow-up"></i> 导入文件
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="showTemplates()">
+                            <i class="bi bi-collection"></i> 漏洞模板
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="showPublicVulnDB()">
+                            <i class="bi bi-globe"></i> 公开漏洞库
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportRules()">
+                            <i class="bi bi-download"></i> 导出
+                        </button>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3"><span class="text-muted">版本：</span><strong id="dbVersion">-</strong></div>
+                    <div class="col-md-3"><span class="text-muted">规则总数：</span><strong id="dbCount">-</strong></div>
+                    <div class="col-md-3"><span class="text-muted">已启用：</span><strong id="dbEnabled">-</strong></div>
+                    <div class="col-md-3"><span class="text-muted">更新时间：</span><strong id="dbTime">-</strong></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover" id="rulesTable">
+                        <thead><tr><th>规则名</th><th>端口</th><th>等级</th><th>描述</th><th>CVE</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody id="rulesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加规则模态框 -->
+    <div class="modal fade" id="addRuleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加漏洞规则</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">规则名称</label><input type="text" class="form-control" id="ruleName" placeholder="如: Redis未授权访问"></div>
+                        <div class="col-md-3"><label class="form-label">端口</label><input type="number" class="form-control" id="rulePort" placeholder="6379"></div>
+                        <div class="col-md-3"><label class="form-label">等级</label>
+                            <select class="form-select" id="ruleLevel"><option>严重</option><option>高危</option><option>中危</option><option>低危</option></select>
+                        </div>
+                        <div class="col-md-12"><label class="form-label">漏洞描述</label><textarea class="form-control" id="ruleDesc" rows="2" placeholder="描述漏洞风险"></textarea></div>
+                        <div class="col-md-12"><label class="form-label">修复建议</label><textarea class="form-control" id="ruleSolution" rows="2" placeholder="修复方案"></textarea></div>
+                        <div class="col-md-6"><label class="form-label">CVE编号</label><input type="text" class="form-control" id="ruleCVE" placeholder="CVE-2024-xxxxx"></div>
+                        <div class="col-md-6"><label class="form-label">CNVD编号</label><input type="text" class="form-control" id="ruleCNVD" placeholder="CNVD-2024-xxxxx"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addRule()">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件导入模态框 -->
+    <div class="modal fade" id="importFileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-arrow-up"></i> 导入漏洞规则文件</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择文件（支持 .csv 或 .json）</label>
+                        <input type="file" class="form-control" id="importFile" accept=".csv,.json">
+                    </div>
+                    <div class="alert alert-info small">
+                        <strong>CSV格式要求：</strong>列名可选"规则名/名称/端口/端口号/等级/描述/修复建议/CVE/CNVD"<br>
+                        <strong>JSON格式：</strong>{"规则名": {"port": 80, "level": "高危", "desc": "..."}}
+                    </div>
+                    <div id="importFileStatus"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="importFile()">开始导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 漏洞模板模态框 -->
+    <div class="modal fade" id="templateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-collection"></i> 常见漏洞模板</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">选择要导入的漏洞模板类别，包含常见Web服务、数据库、远程服务等安全检测规则</p>
+                    <div id="templateList" class="row g-3">
+                        <!-- 动态加载 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-danger" onclick="importAllTemplates()">
+                        <i class="bi bi-lightning"></i> 一键导入全部
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 公开漏洞库模态框 -->
+    <div class="modal fade" id="publicVulnDBModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-globe"></i> 公开漏洞库查询（OSV / GitHub）</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <!-- OSV 查询 -->
+                        <div class="col-md-6">
+                            <div class="card card-custom">
+                                <div class="card-body">
+                                    <h6><i class="bi bi-search"></i> OSV 按包名查询</h6>
+                                    <p class="text-muted small mb-2">Google开源漏洞数据库，支持 PyPI/npm/Maven/Go 等生态系统</p>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="osvKeyword" placeholder="如: flask, express, log4j">
+                                        <button class="btn btn-primary" onclick="queryOSV()">查询</button>
+                                    </div>
+                                    <div class="d-flex gap-2 mb-2">
+                                        <select class="form-select form-select-sm" id="osvEcosystem" style="width:auto">
+                                            <option value="PyPI">PyPI (Python)</option>
+                                            <option value="npm">npm (Node.js)</option>
+                                            <option value="Maven">Maven (Java)</option>
+                                            <option value="Go">Go</option>
+                                            <option value="crates.io">crates.io (Rust)</option>
+                                        </select>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="batchOSV()">批量查询常见组件</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- GitHub 查询 -->
+                        <div class="col-md-6">
+                            <div class="card card-custom">
+                                <div class="card-body">
+                                    <h6><i class="bi bi-github"></i> GitHub Advisory 查询</h6>
+                                    <p class="text-muted small mb-2">GitHub安全公告数据库，按严重等级和生态系统筛选</p>
+                                    <div class="d-flex gap-2 mb-2">
+                                        <select class="form-select form-select-sm" id="ghSeverity" style="width:auto">
+                                            <option value="">全部等级</option>
+                                            <option value="critical">严重</option>
+                                            <option value="high">高危</option>
+                                            <option value="medium">中危</option>
+                                            <option value="low">低危</option>
+                                        </select>
+                                        <select class="form-select form-select-sm" id="ghEcosystem" style="width:auto">
+                                            <option value="">全部生态</option>
+                                            <option value="pip">pip</option>
+                                            <option value="npm">npm</option>
+                                            <option value="maven">maven</option>
+                                            <option value="go">go</option>
+                                            <option value="rust">rust</option>
+                                        </select>
+                                        <button class="btn btn-dark" onclick="queryGitHub()">查询</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 查询结果区域 -->
+                    <div id="publicVulnResults">
+                        <p class="text-center text-muted">选择查询方式后，结果将显示在此处</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 扫描配置 -->
+    <div class="col-md-6">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-sliders"></i> 扫描配置</h5>
+                <table class="table table-sm">
+                    <tr><td style="width:160px;color:#999;">扫描超时</td><td>1.5秒</td></tr>
+                    <tr><td style="color:#999;">并发线程数</td><td>200（快速）/ 500（全端口）</td></tr>
+                    <tr><td style="color:#999;">默认端口数</td><td>26个常用端口</td></tr>
+                    <tr><td style="color:#999;">最大目标数</td><td>5000</td></tr>
+                    <tr><td style="color:#999;">批量大小</td><td>50个/批</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统信息 -->
+    <div class="col-md-6">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-info-circle"></i> 系统信息</h5>
+                <table class="table table-sm">
+                    <tr><td style="width:160px;color:#999;">系统版本</td><td>v1.0.0</td></tr>
+                    <tr><td style="color:#999;">Python版本</td><td>{{ python_version }}</td></tr>
+                    <tr><td style="color:#999;">数据库</td><td>SQLite</td></tr>
+                    <tr><td style="color:#999;">Web框架</td><td>Flask</td></tr>
+                    <tr><td style="color:#999;">漏洞库</td><td>外部JSON（可更新）</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据存储 -->
+    <div class="col-md-12">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-hdd-stack"></i> 数据存储路径</h5>
+                <table class="table table-sm">
+                    <tr><td style="width:160px;color:#999;">数据库文件</td><td><code>data/netscan.db</code></td></tr>
+                    <tr><td style="color:#999;">漏洞规则库</td><td><code>vuln_db/vuln_rules.json</code></td></tr>
+                    <tr><td style="color:#999;">报告目录</td><td><code>reports/</code></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 加载漏洞库信息
+function refreshVulnDB() {
+    fetch('/api/vulndb/info').then(r=>r.json()).then(data => {
+        document.getElementById('dbVersion').textContent = data.version;
+        document.getElementById('dbCount').textContent = data.count;
+        document.getElementById('dbEnabled').textContent = data.enabled_count;
+        document.getElementById('dbTime').textContent = data.update_time;
+    });
+    fetch('/api/vulndb/rules').then(r=>r.json()).then(rules => {
+        const tbody = document.getElementById('rulesBody');
+        tbody.innerHTML = '';
+        for (const [name, rule] of Object.entries(rules)) {
+            const levelClass = {'严重':'badge-critical','高危':'badge-high','中危':'badge-medium','低危':'badge-low'}[rule.level]||'';
+            tbody.innerHTML += `<tr>
+                <td><strong>${name}</strong></td>
+                <td>${rule.port}</td>
+                <td><span class="badge ${levelClass}">${rule.level}</span></td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rule.desc||''}</td>
+                <td>${rule.cve||'-'}</td>
+                <td>${rule.enabled!==false?'<span class="badge bg-success">启用</span>':'<span class="badge bg-secondary">禁用</span>'}</td>
+                <td>
+                    <button class="btn btn-outline-warning btn-sm" onclick="toggleRule('${name}',${rule.enabled===false})">${rule.enabled!==false?'禁用':'启用'}</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteRule('${name}')">删除</button>
+                </td>
+            </tr>`;
+        }
+    });
+}
+
+function showAddRule() { new bootstrap.Modal(document.getElementById('addRuleModal')).show(); }
+
+function addRule() {
+    const data = {
+        name: document.getElementById('ruleName').value,
+        port: document.getElementById('rulePort').value,
+        level: document.getElementById('ruleLevel').value,
+        desc: document.getElementById('ruleDesc').value,
+        solution: document.getElementById('ruleSolution').value,
+        cve: document.getElementById('ruleCVE').value,
+        cnvd: document.getElementById('ruleCNVD').value
+    };
+    if (!data.name || !data.port) { alert('请填写规则名和端口'); return; }
+    fetch('/api/vulndb/add', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+        .then(r=>r.json()).then(r => { alert(r.message); if(r.success){bootstrap.Modal.getInstance(document.getElementById('addRuleModal')).hide();refreshVulnDB();} });
+}
+
+function deleteRule(name) {
+    if (!confirm('确认删除规则: '+name+'?')) return;
+    fetch('/api/vulndb/delete', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})})
+        .then(r=>r.json()).then(r => { if(r.success) refreshVulnDB(); });
+}
+
+function toggleRule(name, enable) {
+    fetch('/api/vulndb/toggle', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,enabled:enable})})
+        .then(r=>r.json()).then(r => { if(r.success) refreshVulnDB(); });
+}
+
+function exportRules() {
+    fetch('/api/vulndb/export').then(r=>r.json()).then(r => {
+        const blob = new Blob([r.content], {type:'text/plain'});
+        const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download='vuln_rules_export.txt'; a.click();
+    });
+}
+
+// CNVD爬取
+function crawlCNVD() {
+    const pages = prompt('请输入爬取页数（每页约20条，默认2页）:', '2');
+    if (!pages) return;
+    if (!confirm('将从国家信息安全漏洞库(CNVD)爬取最新漏洞，确认？')) return;
+
+    document.getElementById('rulesBody').innerHTML = '<tr><td colspan="7" class="text-center"><i class="bi bi-arrow-repeat spin"></i> 正在爬取CNVD漏洞库...</td></tr>';
+
+    fetch('/api/vulndb/cnvd/crawl', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({pages: parseInt(pages)})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            // 轮询爬取状态
+            const poll = setInterval(() => {
+                fetch('/api/scan/status').then(r=>r.json()).then(status => {
+                    if (!status.running && status.type === 'CNVD爬取') {
+                        clearInterval(poll);
+                        if (status.success === false) {
+                            // 爬取失败，显示错误信息
+                            document.getElementById('rulesBody').innerHTML =
+                                `<tr><td colspan="7" class="text-center text-danger">
+                                    <i class="bi bi-exclamation-triangle"></i> ${status.message || '爬取失败，请检查网络连接'}
+                                    <br><small>可能原因：CNVD网站反爬、网络不通、服务器无外网访问权限</small>
+                                    <br><button class="btn btn-sm btn-outline-primary mt-2" onclick="refreshVulnDB()">返回规则列表</button>
+                                </td></tr>`;
+                        } else {
+                            loadPendingCNVD();
+                        }
+                    } else {
+                        document.getElementById('rulesBody').innerHTML =
+                            `<tr><td colspan="7" class="text-center"><i class="bi bi-arrow-repeat spin"></i> ${status.message} (${status.progress}%)</td></tr>`;
+                    }
+                }).catch(() => {
+                    // 网络错误时也停止轮询
+                });
+            }, 2000);
+            // 超时保护：60秒后自动停止轮询
+            setTimeout(() => { clearInterval(poll); }, 60000);
+        }
+    }).catch(err => {
+        document.getElementById('rulesBody').innerHTML =
+            `<tr><td colspan="7" class="text-center text-danger">
+                <i class="bi bi-exclamation-triangle"></i> 请求失败: ${err.message}
+                <br><button class="btn btn-sm btn-outline-primary mt-2" onclick="refreshVulnDB()">返回规则列表</button>
+            </td></tr>`;
+    });
+}
+
+// 加载待审核CNVD漏洞
+function loadPendingCNVD() {
+    fetch('/api/vulndb/cnvd/pending').then(r=>r.json()).then(data => {
+        const rules = data.rules || {};
+        const stats = data.stats || {};
+        const tbody = document.getElementById('rulesBody');
+
+        if (Object.keys(rules).length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">无待审核数据</td></tr>';
+            return;
+        }
+
+        let html = `<tr><td colspan="7" class="text-info">
+            <i class="bi bi-info-circle"></i> 发现 ${stats.total || 0} 条CNVD漏洞，以下为待审核规则：
+            <button class="btn btn-sm btn-success ms-2" onclick="importAllCNVD()">全部导入</button>
+            <button class="btn btn-sm btn-outline-secondary ms-1" onclick="refreshVulnDB()">取消</button>
+        </td></tr>`;
+
+        for (const [name, rule] of Object.entries(rules)) {
+            const levelClass = {'严重':'badge-critical','高危':'badge-high','中危':'badge-medium','低危':'badge-low'}[rule.level]||'';
+            html += `<tr>
+                <td><strong>${name.substring(0,40)}</strong><br><small class="text-muted">${rule.cnvd||''}</small></td>
+                <td>${rule.port}</td>
+                <td><span class="badge ${levelClass}">${rule.level}</span></td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(rule.desc||'').substring(0,80)}</td>
+                <td>${rule.cve||'-'}</td>
+                <td><span class="badge bg-warning text-dark">待审核</span></td>
+                <td><button class="btn btn-outline-success btn-sm" onclick="importOneCNVD('${name.replace(/'/g,"\\'")}')">导入</button></td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
+    });
+}
+
+function importAllCNVD() {
+    if (!confirm('确认导入全部CNVD漏洞规则？')) return;
+    fetch('/api/vulndb/cnvd/import', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({selected: []})
+    }).then(r=>r.json()).then(r => {
+        alert(r.message);
+        refreshVulnDB();
+    });
+}
+
+function importOneCNVD(name) {
+    fetch('/api/vulndb/cnvd/import', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({selected: [name]})
+    }).then(r=>r.json()).then(r => {
+        alert(r.message);
+        refreshVulnDB();
+    });
+}
+
+// 文件导入
+function showImportFile() {
+    document.getElementById('importFile').value = '';
+    document.getElementById('importFileStatus').innerHTML = '';
+    new bootstrap.Modal(document.getElementById('importFileModal')).show();
+}
+
+function importFile() {
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput.files.length) { alert('请先选择文件'); return; }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    document.getElementById('importFileStatus').innerHTML = '<div class="text-info"><i class="bi bi-arrow-repeat spin"></i> 正在导入...</div>';
+
+    fetch('/api/vulndb/import/file', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(r => {
+            document.getElementById('importFileStatus').innerHTML =
+                `<div class="alert alert-${r.success ? 'success' : 'danger'} py-2">${r.message}</div>`;
+            if (r.success) {
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('importFileModal')).hide();
+                    refreshVulnDB();
+                }, 1500);
+            }
+        })
+        .catch(err => {
+            document.getElementById('importFileStatus').innerHTML =
+                `<div class="alert alert-danger py-2">上传失败: ${err.message}</div>`;
+        });
+}
+
+// 漏洞模板
+function showTemplates() {
+    fetch('/api/vulndb/templates').then(r => r.json()).then(data => {
+        const container = document.getElementById('templateList');
+        const icons = {'Web服务漏洞':'bi-globe','数据库漏洞':'bi-database','远程服务漏洞':'bi-pc-display','常见组件漏洞':'bi-box'};
+        let html = '';
+        for (const [cat, count] of Object.entries(data.templates)) {
+            html += `<div class="col-md-6">
+                <div class="card card-custom" style="cursor:pointer" onclick="importTemplate('${cat}')">
+                    <div class="card-body d-flex align-items-center">
+                        <i class="bi ${icons[cat]||bi-bug} fs-2 text-primary me-3"></i>
+                        <div>
+                            <h6 class="mb-1">${cat}</h6>
+                            <small class="text-muted">${count} 条规则</small>
+                        </div>
+                        <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                    </div>
+                </div>
+            </div>`;
+        }
+        container.innerHTML = html;
+        new bootstrap.Modal(document.getElementById('templateModal')).show();
+    });
+}
+
+function importTemplate(category) {
+    if (!confirm(`确认导入 [${category}] 的所有漏洞模板规则？`)) return;
+    fetch('/api/vulndb/import/template', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({category})
+    }).then(r => r.json()).then(r => {
+        alert(r.message);
+        if (r.success) {
+            bootstrap.Modal.getInstance(document.getElementById('templateModal')).hide();
+            refreshVulnDB();
+        }
+    });
+}
+
+function importAllTemplates() {
+    if (!confirm('确认导入全部漏洞模板？这将添加约20条常见漏洞检测规则。')) return;
+    fetch('/api/vulndb/import/template', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({category: 'all'})
+    }).then(r => r.json()).then(r => {
+        alert(r.message);
+        if (r.success) {
+            bootstrap.Modal.getInstance(document.getElementById('templateModal')).hide();
+            refreshVulnDB();
+        }
+    });
+}
+
+// 公开漏洞库
+function showPublicVulnDB() {
+    new bootstrap.Modal(document.getElementById('publicVulnDBModal')).show();
+}
+
+function queryOSV() {
+    const keyword = document.getElementById('osvKeyword').value.trim();
+    if (!keyword) { alert('请输入包名'); return; }
+    const container = document.getElementById('publicVulnResults');
+    container.innerHTML = '<div class="text-center"><i class="bi bi-arrow-repeat spin"></i> 正在查询OSV...</div>';
+
+    fetch('/api/vulndb/osv/query', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({keyword})
+    }).then(r => r.json()).then(data => {
+        if (!data.success) { container.innerHTML = `<div class="alert alert-danger">${data.message}</div>`; return; }
+        pollPublicVulnResult('OSV查询', 'osv');
+    });
+}
+
+function batchOSV() {
+    const eco = document.getElementById('osvEcosystem').value;
+    const container = document.getElementById('publicVulnResults');
+    container.innerHTML = '<div class="text-center"><i class="bi bi-arrow-repeat spin"></i> 正在批量查询...</div>';
+
+    fetch('/api/vulndb/osv/batch', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ecosystem: eco, max_count: 30})
+    }).then(r => r.json()).then(data => {
+        if (!data.success) { container.innerHTML = `<div class="alert alert-danger">${data.message}</div>`; return; }
+        pollPublicVulnResult('OSV批量查询', 'osv');
+    });
+}
+
+function queryGitHub() {
+    const severity = document.getElementById('ghSeverity').value;
+    const ecosystem = document.getElementById('ghEcosystem').value;
+    const container = document.getElementById('publicVulnResults');
+    container.innerHTML = '<div class="text-center"><i class="bi bi-arrow-repeat spin"></i> 正在查询GitHub Advisory...</div>';
+
+    fetch('/api/vulndb/github/query', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({severity, ecosystem, max_count: 30})
+    }).then(r => r.json()).then(data => {
+        if (!data.success) { container.innerHTML = `<div class="alert alert-danger">${data.message}</div>`; return; }
+        pollPublicVulnResult('GitHub查询', 'github');
+    });
+}
+
+function pollPublicVulnResult(type, source) {
+    const container = document.getElementById('publicVulnResults');
+    const poll = setInterval(() => {
+        fetch('/api/scan/status').then(r => r.json()).then(status => {
+            if (!status.running && status.type && status.type.includes(type.replace('批量查询', '').replace('查询', ''))) {
+                clearInterval(poll);
+                if (status.success === false) {
+                    container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${status.message}</div>`;
+                } else {
+                    loadPendingPublicVuln(source);
+                }
+            } else if (status.running) {
+                container.innerHTML = `<div class="text-center"><i class="bi bi-arrow-repeat spin"></i> ${status.message} (${status.progress}%)</div>`;
+            }
+        }).catch(() => {});
+    }, 2000);
+}
+
+function loadPendingPublicVuln(source) {
+    const container = document.getElementById('publicVulnResults');
+    fetch(`/api/vulndb/${source}/pending`).then(r => r.json()).then(data => {
+        const rules = data.rules || {};
+        const count = Object.keys(rules).length;
+        if (count === 0) {
+            container.innerHTML = '<div class="alert alert-warning">未查询到漏洞数据，请检查网络连接或更换关键词</div>';
+            return;
+        }
+
+        let html = `<div class="mb-2 d-flex justify-content-between align-items-center">
+            <span class="text-info"><i class="bi bi-info-circle"></i> 查询到 ${count} 条漏洞规则（默认禁用，请审核后导入）</span>
+            <div>
+                <button class="btn btn-sm btn-success" onclick="importPendingPublic('${source}')">全部导入</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('publicVulnResults').innerHTML='<p class=text-center>已取消</p>'">取消</button>
+            </div>
+        </div>`;
+
+        html += '<div class="table-responsive"><table class="table table-custom table-hover"><thead><tr><th>规则名</th><th>端口</th><th>等级</th><th>描述</th><th>CVE</th><th>来源</th></tr></thead><tbody>';
+        for (const [name, rule] of Object.entries(rules)) {
+            const levelClass = {'严重':'badge-critical','高危':'badge-high','中危':'badge-medium','低危':'badge-low'}[rule.level]||'';
+            html += `<tr>
+                <td style="max-width:200px;word-break:break-all"><strong>${name.substring(0,50)}</strong></td>
+                <td>${rule.port}</td>
+                <td><span class="badge ${levelClass}">${rule.level}</span></td>
+                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(rule.desc||'').substring(0,80)}</td>
+                <td>${rule.cve||'-'}</td>
+                <td><span class="badge bg-info">${rule.source||source}</span></td>
+            </tr>`;
+        }
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    });
+}
+
+function importPendingPublic(source) {
+    if (!confirm('确认导入全部查询到的漏洞规则？')) return;
+    fetch('/api/vulndb/import/pending', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({source, selected: []})
+    }).then(r => r.json()).then(r => {
+        alert(r.message);
+        if (r.success) {
+            bootstrap.Modal.getInstance(document.getElementById('publicVulnDBModal')).hide();
+            refreshVulnDB();
+        }
+    });
+}
+
+refreshVulnDB();
+</script>
+{% endblock %}

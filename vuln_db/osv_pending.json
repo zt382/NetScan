@@ -1,0 +1,341 @@
+{
+  "rules": {
+    "OSV-GHSA-4grg-w6v8-c28g": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Flask uses fallback key instead of current signing key",
+      "solution": "升级到安全版本: >=3.1.0 <3.1.1",
+      "cve": "CVE-2025-47278",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:04"
+    },
+    "OSV-GHSA-562c-5r94-xh97": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Flask is vulnerable to Denial of Service via incorrect encoding of JSON data",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/flask/PYSEC-2018-66.yaml",
+      "cve": "CVE-2018-1000656",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:04"
+    },
+    "OSV-GHSA-5wv5-4vpf-pj6m": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Pallets Project Flask is vulnerable to Denial of Service via Unexpected memory usage",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/flask/PYSEC-2019-179.yaml",
+      "cve": "CVE-2019-1010083",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:04"
+    },
+    "OSV-GHSA-68rp-wp8r-4726": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Flask session does not add `Vary: Cookie` header when accessed in some ways",
+      "solution": "升级到安全版本: >=0 <3.1.3",
+      "cve": "CVE-2026-27205",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:04"
+    },
+    "OSV-GHSA-m2qf-hxjv-5gpq": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Flask vulnerable to possible disclosure of permanent session cookie due to missing Vary: Cookie header",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/flask/PYSEC-2023-62.yaml",
+      "cve": "CVE-2023-30861",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:04"
+    },
+    "OSV-GHSA-2655-q453-22f9": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Django Allows Arbitrary URL Generation",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/django/PYSEC-2012-7.yaml",
+      "cve": "CVE-2012-4520",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:11"
+    },
+    "OSV-GHSA-296w-6qhq-gf92": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Django denial of service via file upload naming",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/django/PYSEC-2014-5.yaml",
+      "cve": "CVE-2014-0481",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:11"
+    },
+    "OSV-GHSA-2f9x-5v75-3qv4": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Django Denial-of-service possibility in truncatechars_html and truncatewords_html template filters",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/django/PYSEC-2018-6.yaml",
+      "cve": "CVE-2018-7537",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:11"
+    },
+    "OSV-GHSA-2gwj-7jmv-h26r": {
+      "port": 80,
+      "level": "中危",
+      "desc": "SQL Injection in Django",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/django/PYSEC-2022-190.yaml",
+      "cve": "CVE-2022-28346",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:11"
+    },
+    "OSV-GHSA-2hrw-hx67-34x6": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Resource exhaustion in Django",
+      "solution": "参考: https://security.netapp.com/advisory/ntap-20230316-0006",
+      "cve": "CVE-2023-24580",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:11"
+    },
+    "OSV-GHSA-652x-xj99-gmcc": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Exposure of Sensitive Information to an Unauthorized Actor in Requests",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/requests/PYSEC-2014-14.yaml",
+      "cve": "CVE-2014-1830",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:20"
+    },
+    "OSV-GHSA-9hjg-9r4m-mvj7": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Requests vulnerable to .netrc credentials leak via malicious URLs",
+      "solution": "升级到安全版本: >=0 <2.32.4",
+      "cve": "CVE-2024-47081",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:20"
+    },
+    "OSV-GHSA-9wx4-h78v-vm56": {
+      "port": 443,
+      "level": "中危",
+      "desc": "Requests `Session` object does not verify requests after making first request with verify=False",
+      "solution": "升级到安全版本: >=0 <2.32.0",
+      "cve": "CVE-2024-35195",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:20"
+    },
+    "OSV-GHSA-cfj3-7x9c-4p3h": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Exposure of Sensitive Information to an Unauthorized Actor in Requests",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/requests/PYSEC-2014-13.yaml",
+      "cve": "CVE-2014-1829",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:20"
+    },
+    "OSV-GHSA-gc5v-m9x4-r6x2": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Requests has Insecure Temp File Reuse in its extract_zipped_paths() utility function",
+      "solution": "升级到安全版本: >=0 <2.33.0",
+      "cve": "CVE-2026-25645",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:20"
+    },
+    "OSV-GHSA-2xpw-w6gg-jr37": {
+      "port": 80,
+      "level": "中危",
+      "desc": "urllib3 streaming API improperly handles highly compressed data",
+      "solution": "升级到安全版本: >=1.0 <2.6.0",
+      "cve": "CVE-2025-66471",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:30"
+    },
+    "OSV-GHSA-34jh-p97f-mpxf": {
+      "port": 80,
+      "level": "中危",
+      "desc": "urllib3's Proxy-Authorization request header isn't stripped during cross-origin redirects",
+      "solution": "参考: https://security.netapp.com/advisory/ntap-20240822-0003",
+      "cve": "CVE-2024-37891",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:30"
+    },
+    "OSV-GHSA-38jv-5279-wg99": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Decompression-bomb safeguards bypassed when following HTTP redirects (streaming API)",
+      "solution": "升级到安全版本: >=1.22 <2.6.3",
+      "cve": "CVE-2026-21441",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:30"
+    },
+    "OSV-GHSA-48p4-8xcf-vxj5": {
+      "port": 80,
+      "level": "中危",
+      "desc": "urllib3 does not control redirects in browsers and Node.js",
+      "solution": "升级到安全版本: >=2.2.0 <2.5.0",
+      "cve": "CVE-2025-50182",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:30"
+    },
+    "OSV-GHSA-5phf-pp7p-vc2r": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Using default SSLContext for HTTPS requests in an HTTPS proxy doesn't verify certificate hostname for proxy connection",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/urllib3/PYSEC-2021-59.yaml",
+      "cve": "CVE-2021-28363",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:30"
+    },
+    "OSV-GHSA-3c5c-7235-994j": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Pillow buffer overflow in ImagingPcdDecode",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/pillow/PYSEC-2016-19.yaml",
+      "cve": "CVE-2016-2533",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:43"
+    },
+    "OSV-GHSA-3f63-hfp8-52jq": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Arbitrary Code Execution in Pillow",
+      "solution": "升级到安全版本: >=0 <10.2.0",
+      "cve": "CVE-2023-50447",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:43"
+    },
+    "OSV-GHSA-3wvg-mj6g-m9cv": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Pillow Uncontrolled Resource Consumption",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/pillow/PYSEC-2021-41.yaml",
+      "cve": "CVE-2021-27922",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:43"
+    },
+    "OSV-GHSA-3xv8-3j54-hgrp": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Out-of-bounds read in Pillow",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/pillow/PYSEC-2020-77.yaml",
+      "cve": "CVE-2020-10378",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:43"
+    },
+    "OSV-GHSA-43fq-w8qq-v88h": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Out-of-bounds read in Pillow",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/pillow/PYSEC-2020-80.yaml",
+      "cve": "CVE-2020-11538",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:43"
+    },
+    "OSV-GHSA-3pqx-4fqf-j49f": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Deserialization of Untrusted Data in PyYAML",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/pyyaml/PYSEC-2020-176.yaml",
+      "cve": "CVE-2019-20477",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:52"
+    },
+    "OSV-GHSA-6757-jp84-gxfx": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Improper Input Validation in PyYAML",
+      "solution": "参考: https://github.com/github/advisory-database/pull/4942",
+      "cve": "CVE-2020-1747",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:52"
+    },
+    "OSV-GHSA-8q59-q68h-6hv4": {
+      "port": 80,
+      "level": "中危",
+      "desc": "Improper Input Validation in PyYAML",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/pyyaml/PYSEC-2021-142.yaml",
+      "cve": "CVE-2020-14343",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:52"
+    },
+    "OSV-GHSA-rprw-h62v-c2w7": {
+      "port": 80,
+      "level": "中危",
+      "desc": "PyYAML insecurely deserializes YAML strings leading to arbitrary code execution",
+      "solution": "参考: https://github.com/pypa/advisory-database/tree/main/vulns/pyyaml/PYSEC-2018-49.yaml",
+      "cve": "CVE-2017-18342",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:52"
+    },
+    "OSV-PYSEC-2018-49": {
+      "port": 80,
+      "level": "中危",
+      "desc": "In PyYAML before 5.1, the yaml.load() API could execute arbitrary code if used with untrusted data. The load() function has been deprecated in version 5.1 and the 'UnsafeLoader' has been introduced fo",
+      "solution": "升级到安全版本: >=0 <5.1",
+      "cve": "CVE-2017-18342",
+      "cnvd": "",
+      "enabled": false,
+      "source": "OSV",
+      "import_time": "2026-05-08 12:06:52"
+    }
+  },
+  "stats": {
+    "total": 30,
+    "errors": 0,
+    "source": "OSV",
+    "ecosystem": "PyPI",
+    "crawl_time": "2026-05-08 12:06:52"
+  }
+}

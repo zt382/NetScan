@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}定时扫描 - 网络安全资产扫描系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-clock-history"></i> 定时扫描</h2>
+    <div class="breadcrumb-text">配置定时自动扫描任务，系统将按计划自动执行</div>
+</div>
+
+<!-- 添加定时任务 -->
+<div class="card card-custom mb-4">
+    <div class="card-body">
+        <h5 class="card-title mb-3"><i class="bi bi-plus-circle"></i> 新建定时任务</h5>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">任务名称</label>
+                <input type="text" class="form-control" id="taskName" placeholder="如：每日资产巡检">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">扫描目标</label>
+                <input type="text" class="form-control" id="taskTarget" placeholder="192.168.1.0/24">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">扫描类型</label>
+                <select class="form-select" id="taskType">
+                    <option value="资产扫描">资产扫描</option>
+                    <option value="漏洞扫描">漏洞扫描</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">扫描模式</label>
+                <select class="form-select" id="taskMode">
+                    <option value="快速">快速</option>
+                    <option value="中速">中速</option>
+                    <option value="全端口">全端口</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-scan w-100" onclick="addScheduledTask()">
+                    <i class="bi bi-plus"></i> 创建任务
+                </button>
+            </div>
+        </div>
+
+        <!-- Cron 表达式配置 -->
+        <div class="row g-3 mt-2">
+            <div class="col-md-6">
+                <label class="form-label">执行周期（Cron表达式）</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="cronExpr" placeholder="0 2 * * *" value="0 2 * * *">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">快速选择</button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="setCron('0 * * * *')">每小时执行</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="setCron('0 2 * * *')">每天凌晨2点</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="setCron('0 2 * * 1')">每周一凌晨2点</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="setCron('0 2 1 * *')">每月1号凌晨2点</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="setCron('0 */6 * * *')">每6小时执行</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="setCron('0 8,12,18 * * *')">每天8/12/18点</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="setCron('30 1 * * 0')">每周日凌晨1:30</a></li>
+                    </ul>
+                </div>
+                <div class="form-text">格式：分 时 日 月 周（如 <code>0 2 * * *</code> = 每天凌晨2点）</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">表达式说明</label>
+                <div class="form-control bg-light" id="cronDesc" style="height:auto;min-height:38px;">
+                    <i class="bi bi-info-circle"></i> 每天凌晨 2:00 执行
+                </div>
+            </div>
+        </div>
+
+        <div id="addResult" class="mt-2" style="font-size:13px;"></div>
+    </div>
+</div>
+
+<!-- 定时任务列表 -->
+<div class="card card-custom">
+    <div class="card-body">
+        <h5 class="card-title mb-3"><i class="bi bi-list-check"></i> 定时任务列表</h5>
+        {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-custom table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>任务名称</th>
+                        <th>扫描目标</th>
+                        <th>类型/模式</th>
+                        <th>Cron表达式</th>
+                        <th>状态</th>
+                        <th>上次执行</th>
+                        <th>下次执行</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for t in tasks %}
+                <tr id="scheduled-row-{{ t.id }}">
+                    <td>#{{ t.id }}</td>
+                    <td><strong>{{ t.name }}</strong></td>
+                    <td><code>{{ t.target }}</code></td>
+                    <td>
+                        <span class="badge bg-info">{{ t.scan_type }}</span>
+                        <span class="badge bg-secondary">{{ t.scan_mode }}</span>
+                    </td>
+                    <td><code>{{ t.cron_expression }}</code></td>
+                    <td>
+                        {% if t.is_active %}
+                        <span class="badge bg-success" id="status-{{ t.id }}">启用</span>
+                        {% else %}
+                        <span class="badge bg-secondary" id="status-{{ t.id }}">禁用</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px;">{{ t.last_run_time or '从未执行' }}</td>
+                    <td style="font-size:12px;">{{ t.next_run_time or '-' }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary btn-sm" onclick="runNow({{ t.id }})" title="立即执行一次">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                            <button class="btn btn-outline-{% if t.is_active %}warning{% else %}success{% endif %} btn-sm"
+                                    onclick="toggleTask({{ t.id }}, {% if t.is_active %}false{% else %}true{% endif %})"
+                                    title="{% if t.is_active %}禁用{% else %}启用{% endif %}" id="toggle-btn-{{ t.id }}">
+                                <i class="bi bi-{% if t.is_active %}pause{% else %}play{% endif %}"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteTask({{ t.id }}, '{{ t.name }}')" title="删除">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-clock" style="font-size:48px;color:#ddd;"></i>
+            <p class="mt-3 text-muted">暂无定时扫描任务，点击上方"创建任务"添加</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cron 表达式说明 -->
+<div class="card card-custom mt-4">
+    <div class="card-body">
+        <h5 class="card-title mb-3"><i class="bi bi-question-circle"></i> Cron 表达式说明</h5>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered" style="font-size:13px;">
+                <thead>
+                    <tr><th>字段</th><th>取值范围</th><th>特殊字符</th><th>示例</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>分钟</td><td>0-59</td><td>* , - /</td><td><code>0</code> = 整点, <code>*/15</code> = 每15分钟</td></tr>
+                    <tr><td>小时</td><td>0-23</td><td>* , - /</td><td><code>2</code> = 凌晨2点, <code>8,12,18</code> = 8/12/18点</td></tr>
+                    <tr><td>日期</td><td>1-31</td><td>* , - /</td><td><code>1</code> = 每月1号, <code>*</code> = 每天</td></tr>
+                    <tr><td>月份</td><td>1-12</td><td>* , - /</td><td><code>1,6</code> = 1月和6月</td></tr>
+                    <tr><td>星期</td><td>0-6 (0=周日)</td><td>* , - /</td><td><code>1-5</code> = 工作日, <code>0</code> = 周日</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="text-muted" style="font-size:12px;">
+            <strong>常用示例：</strong>
+            <code>0 2 * * *</code> 每天凌晨2点 |
+            <code>0 */6 * * *</code> 每6小时 |
+            <code>0 2 * * 1</code> 每周一凌晨2点 |
+            <code>30 1 * * 0</code> 每周日凌晨1:30
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 设置 Cron 表达式
+function setCron(expr) {
+    document.getElementById('cronExpr').value = expr;
+    describeCron(expr);
+}
+
+// 描述 Cron 表达式
+function describeCron(expr) {
+    const parts = expr.trim().split(/\s+/);
+    if (parts.length !== 5) {
+        document.getElementById('cronDesc').innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> 格式错误，应为5个字段';
+        return;
+    }
+
+    let desc = '';
+    const [min, hour, day, month, dow] = parts;
+
+    // 分钟
+    if (min === '*') desc += '每分钟';
+    else if (min.startsWith('*/')) desc += `每${min.slice(2)}分钟`;
+    else desc += `第${min}分钟`;
+
+    // 小时
+    if (hour === '*') desc += '的每小时';
+    else if (hour.startsWith('*/')) desc += `的每${hour.slice(2)}小时`;
+    else if (hour.includes(',')) desc += `的${hour.replace(/,/g, '、')}点`;
+    else desc += `的${hour}点`;
+
+    // 日期
+    if (day !== '*') {
+        if (day.includes(',')) desc += `，每月${day.replace(/,/g, '、')}号`;
+        else desc += `，每月${day}号`;
+    }
+
+    // 月份
+    if (month !== '*') {
+        if (month.includes(',')) desc += `，${month.replace(/,/g, '、')}月`;
+        else desc += `，${month}月`;
+    }
+
+    // 星期
+    if (dow !== '*') {
+        const weekNames = {'0': '日', '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六'};
+        if (dow === '1-5') desc += '，工作日';
+        else if (dow.includes('-')) desc += `，周${weekNames[dow.split('-')[0]] || dow.split('-')[0]}到周${weekNames[dow.split('-')[1]] || dow.split('-')[1]}`;
+        else if (dow.includes(',')) desc += `，周${dow.split(',').map(d => weekNames[d] || d).join('、')}`;
+        else desc += `，周${weekNames[dow] || dow}`;
+    }
+
+    desc += '执行';
+    document.getElementById('cronDesc').innerHTML = `<i class="bi bi-info-circle"></i> ${desc}`;
+}
+
+// 监听 Cron 输入变化
+document.getElementById('cronExpr').addEventListener('input', function() {
+    describeCron(this.value);
+});
+
+// 初始化描述
+describeCron(document.getElementById('cronExpr').value);
+
+// 添加定时任务
+function addScheduledTask() {
+    const name = document.getElementById('taskName').value.trim();
+    const target = document.getElementById('taskTarget').value.trim();
+    const scanType = document.getElementById('taskType').value;
+    const scanMode = document.getElementById('taskMode').value;
+    const cronExpr = document.getElementById('cronExpr').value.trim();
+
+    if (!name) { alert('请输入任务名称'); return; }
+    if (!target) { alert('请输入扫描目标'); return; }
+    if (!cronExpr) { alert('请输入Cron表达式'); return; }
+
+    fetch('/api/scheduled/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            name: name, target: target, scan_type: scanType,
+            scan_mode: scanMode, cron_expression: cronExpr
+        })
+    }).then(r => r.json()).then(data => {
+        const el = document.getElementById('addResult');
+        if (data.success) {
+            el.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> ' + data.message + '</span>';
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            el.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle"></i> ' + data.message + '</span>';
+        }
+    });
+}
+
+// 立即执行
+function runNow(taskId) {
+    if (!confirm('确定立即执行一次该定时任务？')) return;
+    fetch('/api/scheduled/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({task_id: taskId})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            alert(data.message + '\n可在"扫描任务"页面查看执行进度');
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+// 启用/禁用
+function toggleTask(taskId, isActive) {
+    fetch('/api/scheduled/toggle', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({task_id: taskId, is_active: isActive})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            // 更新UI
+            const statusEl = document.getElementById('status-' + taskId);
+            const btnEl = document.getElementById('toggle-btn-' + taskId);
+            if (isActive) {
+                statusEl.className = 'badge bg-success';
+                statusEl.textContent = '启用';
+                btnEl.className = 'btn btn-outline-warning btn-sm';
+                btnEl.title = '禁用';
+                btnEl.innerHTML = '<i class="bi bi-pause"></i>';
+                btnEl.onclick = function() { toggleTask(taskId, false); };
+            } else {
+                statusEl.className = 'badge bg-secondary';
+                statusEl.textContent = '禁用';
+                btnEl.className = 'btn btn-outline-success btn-sm';
+                btnEl.title = '启用';
+                btnEl.innerHTML = '<i class="bi bi-play"></i>';
+                btnEl.onclick = function() { toggleTask(taskId, true); };
+            }
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+// 删除任务
+function deleteTask(taskId, taskName) {
+    if (!confirm(`确定删除定时任务 [${taskName}] 吗？`)) return;
+    fetch('/api/scheduled/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({task_id: taskId})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            const row = document.getElementById('scheduled-row-' + taskId);
+            if (row) row.remove();
+            // 如果没有任务了，显示空状态
+            const tbody = document.querySelector('tbody');
+            if (tbody && tbody.children.length === 0) {
+                location.reload();
+            }
+        } else {
+            alert(data.message);
+        }
+    });
+}
+</script>
+{% endblock %}

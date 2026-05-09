@@ -1,0 +1,394 @@
+{
+  "version": "2026.05.07",
+  "update_time": "2026-05-07 19:58:33",
+  "description": "网络安全资产扫描系统 - 漏洞检测规则库",
+  "rules": {
+    "FTP服务暴露": {
+      "port": 21,
+      "level": "中危",
+      "desc": "FTP服务对外开放，可能存在匿名登录或明文传输风险",
+      "solution": "建议关闭FTP服务，改用SFTP；如必须使用，禁止匿名登录并启用FTPS加密",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Telnet服务暴露": {
+      "port": 23,
+      "level": "高危",
+      "desc": "Telnet服务使用明文传输，攻击者可嗅探获取账号密码",
+      "solution": "立即关闭Telnet服务，改用SSH进行远程管理",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "远程桌面暴露": {
+      "port": 3389,
+      "level": "高危",
+      "desc": "RDP远程桌面服务暴露在互联网上，易遭受暴力破解攻击",
+      "solution": "限制RDP访问源IP，启用NLA网络级别认证，使用VPN接入",
+      "cve": "CVE-2019-0708",
+      "cnvd": "",
+      "enabled": true
+    },
+    "SMB服务暴露": {
+      "port": 445,
+      "level": "严重",
+      "desc": "SMB服务暴露，曾被永恒之蓝(WannaCry)等勒索病毒利用",
+      "solution": "关闭SMB服务的外网访问，安装MS17-010补丁",
+      "cve": "CVE-2017-0144",
+      "cnvd": "CNVD-2017-02121",
+      "enabled": true
+    },
+    "Redis未授权访问": {
+      "port": 6379,
+      "level": "严重",
+      "desc": "Redis未设置密码认证，可远程执行命令",
+      "solution": "设置requirepass，绑定内网IP",
+      "cve": "CVE-2022-0543",
+      "cnvd": "",
+      "enabled": true
+    },
+    "MongoDB未授权访问": {
+      "port": 27017,
+      "level": "严重",
+      "desc": "MongoDB未开启认证，数据可被直接访问",
+      "solution": "开启auth认证，限制访问IP",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "MySQL服务暴露": {
+      "port": 3306,
+      "level": "高危",
+      "desc": "MySQL数据库服务对外开放，存在暴力破解和SQL注入风险",
+      "solution": "关闭MySQL的外网访问，仅允许内网连接",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "PostgreSQL服务暴露": {
+      "port": 5432,
+      "level": "高危",
+      "desc": "PostgreSQL数据库服务对外开放",
+      "solution": "关闭外网访问，配置pg_hba.conf限制访问源",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "MSSQL服务暴露": {
+      "port": 1433,
+      "level": "高危",
+      "desc": "SQL Server数据库服务对外开放",
+      "solution": "关闭外网访问，使用Windows防火墙限制访问",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "VNC服务暴露": {
+      "port": 5900,
+      "level": "高危",
+      "desc": "VNC远程桌面服务暴露，可能存在弱口令或无密码保护",
+      "solution": "设置VNC密码，使用SSH隧道加密连接",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "ZooKeeper未授权访问": {
+      "port": 2181,
+      "level": "高危",
+      "desc": "ZooKeeper服务对外开放，可能未设置认证",
+      "solution": "配置SASL认证，绑定内网IP",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Elasticsearch未授权访问": {
+      "port": 9200,
+      "level": "严重",
+      "desc": "Elasticsearch未配置认证，可远程访问所有索引",
+      "solution": "启用X-Pack安全功能或配置Nginx代理认证",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Memcached未授权访问": {
+      "port": 11211,
+      "level": "高危",
+      "desc": "Memcached服务对外开放，可被利用进行DDoS反射放大攻击",
+      "solution": "绑定内网IP，禁用UDP协议",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Etcd未授权访问": {
+      "port": 2379,
+      "level": "严重",
+      "desc": "Etcd服务对外开放，可能泄露Kubernetes集群敏感配置",
+      "solution": "启用HTTPS客户端证书认证，绑定内网IP",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Kubernetes API未授权": {
+      "port": 6443,
+      "level": "严重",
+      "desc": "Kubernetes API Server未正确配置认证",
+      "solution": "启用RBAC，配置TLS客户端证书认证",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "RMI服务暴露": {
+      "port": 1099,
+      "level": "高危",
+      "desc": "Java RMI服务暴露，可被利用进行远程代码执行",
+      "solution": "关闭RMI服务外网访问，或使用TLS加密",
+      "cve": "CVE-2017-3241",
+      "cnvd": "",
+      "enabled": true
+    },
+    "LDAP服务暴露": {
+      "port": 389,
+      "level": "中危",
+      "desc": "LDAP服务对外开放，可能泄露目录信息",
+      "solution": "关闭外网访问，改用LDAPS(636端口)",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "SNMP服务暴露": {
+      "port": 161,
+      "level": "中危",
+      "desc": "SNMP服务暴露，默认团体名(public/private)可能被利用",
+      "solution": "修改默认团体名，使用SNMPv3，限制访问源",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "宝塔面板暴露": {
+      "port": 888,
+      "level": "高危",
+      "desc": "宝塔面板管理端口暴露在互联网上",
+      "solution": "限制面板访问IP，修改默认端口，启用两步验证",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Hadoop管理端口暴露": {
+      "port": 8088,
+      "level": "高危",
+      "desc": "Hadoop ResourceManager管理端口暴露",
+      "solution": "配置Kerberos认证，绑定内网IP",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Docker API未授权": {
+      "port": 2375,
+      "level": "严重",
+      "desc": "Docker Remote API未授权访问，可直接控制容器",
+      "solution": "关闭2375端口，使用TLS认证，绑定unix socket",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Jenkins未授权访问": {
+      "port": 8080,
+      "level": "高危",
+      "desc": "Jenkins管理界面可能未设置认证",
+      "solution": "启用Jenkins安全认证，配置访问权限",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true,
+      "match_banner": [
+        "Jenkins"
+      ]
+    },
+    "Spring Boot Actuator暴露": {
+      "port": 8080,
+      "level": "中危",
+      "desc": "Spring Boot Actuator端点暴露，可能泄露敏感信息",
+      "solution": "限制Actuator端点访问，配置management.endpoints.web.exposure.include",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true,
+      "match_banner": [
+        "actuator"
+      ]
+    },
+    "WebLogic未授权访问": {
+      "port": 7001,
+      "level": "严重",
+      "desc": "WebLogic管理控制台暴露",
+      "solution": "修改默认密码，限制访问IP，安装最新补丁",
+      "cve": "CVE-2020-14882",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Tomcat管理端口暴露": {
+      "port": 8080,
+      "level": "中危",
+      "desc": "Tomcat Manager可能使用默认账号密码",
+      "solution": "修改tomcat-users.xml默认密码，限制访问IP",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true,
+      "match_banner": [
+        "Apache Tomcat"
+      ]
+    },
+    "MySQL弱口令": {
+      "port": 3306,
+      "level": "严重",
+      "desc": "MySQL数据库使用弱密码或空密码",
+      "solution": "设置强密码，限制远程访问",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "PostgreSQL弱口令": {
+      "port": 5432,
+      "level": "高危",
+      "desc": "PostgreSQL使用默认或弱密码",
+      "solution": "设置强密码，配置pg_hba.conf限制访问",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Apache路径遍历(CVE-2021-41773)": {
+      "port": 80,
+      "level": "严重",
+      "desc": "Apache HTTP Server 2.4.49路径遍历漏洞，可读取任意文件",
+      "solution": "升级Apache至2.4.51或更高版本",
+      "cve": "CVE-2021-41773",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Nginx越界读取(CVE-2017-7529)": {
+      "port": 80,
+      "level": "高危",
+      "desc": "Nginx range filter模块整数溢出漏洞",
+      "solution": "升级Nginx至最新稳定版",
+      "cve": "CVE-2017-7529",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Tomcat弱口令": {
+      "port": 8080,
+      "level": "高危",
+      "desc": "Tomcat管理后台使用默认弱口令tomcat/tomcat",
+      "solution": "修改默认密码，限制管理后台访问IP",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "IIS短文件名泄露": {
+      "port": 80,
+      "level": "中危",
+      "desc": "IIS短文件名枚举漏洞，可探测后台路径",
+      "solution": "禁用NTFS 8.3短文件名功能",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "WebLogic反序列化(CVE-2023-21839)": {
+      "port": 7001,
+      "level": "严重",
+      "desc": "WebLogic T3/IIOP反序列化远程代码执行",
+      "solution": "安装最新补丁或禁用T3协议",
+      "cve": "CVE-2023-21839",
+      "cnvd": "",
+      "enabled": true
+    },
+    "SSH弱口令": {
+      "port": 22,
+      "level": "严重",
+      "desc": "SSH服务使用弱密码，可能被暴力破解",
+      "solution": "使用密钥登录，禁用密码认证",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "RDP弱口令(CVE-2019-0708)": {
+      "port": 3389,
+      "level": "严重",
+      "desc": "远程桌面服务存在BlueKeep漏洞或弱口令",
+      "solution": "安装补丁，启用NLA，设置强密码",
+      "cve": "CVE-2019-0708",
+      "cnvd": "",
+      "enabled": true
+    },
+    "SMB漏洞(MS17-010)": {
+      "port": 445,
+      "level": "严重",
+      "desc": "Windows SMB远程代码执行漏洞(永恒之蓝)",
+      "solution": "安装MS17-010补丁，关闭SMBv1",
+      "cve": "CVE-2017-0144",
+      "cnvd": "",
+      "enabled": true
+    },
+    "FTP匿名登录": {
+      "port": 21,
+      "level": "高危",
+      "desc": "FTP服务允许匿名登录",
+      "solution": "禁用匿名访问，使用SFTP替代",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Telnet明文传输": {
+      "port": 23,
+      "level": "高危",
+      "desc": "Telnet协议明文传输凭据",
+      "solution": "使用SSH替代Telnet",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Log4j2远程代码执行(CVE-2021-44228)": {
+      "port": 8080,
+      "level": "严重",
+      "desc": "Apache Log4j2 JNDI注入漏洞(Log4Shell)",
+      "solution": "升级Log4j至2.17.0或更高版本",
+      "cve": "CVE-2021-44228",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Fastjson反序列化": {
+      "port": 8080,
+      "level": "严重",
+      "desc": "Fastjson反序列化远程代码执行漏洞",
+      "solution": "升级Fastjson至最新安全版本",
+      "cve": "CVE-2022-25845",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Spring4Shell(CVE-2022-22965)": {
+      "port": 8080,
+      "level": "严重",
+      "desc": "Spring Framework远程代码执行漏洞",
+      "solution": "升级Spring Framework至5.3.18+或5.2.20+",
+      "cve": "CVE-2022-22965",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Struts2命令执行(S2-045)": {
+      "port": 8080,
+      "level": "严重",
+      "desc": "Apache Struts2 Jakarta Multipart解析器RCE",
+      "solution": "升级Struts至2.3.32+或2.5.10.1+",
+      "cve": "CVE-2017-5638",
+      "cnvd": "",
+      "enabled": true
+    },
+    "Docker未授权访问": {
+      "port": 2375,
+      "level": "严重",
+      "desc": "Docker Remote API未认证，可接管宿主机",
+      "solution": "启用TLS认证，限制API访问",
+      "cve": "",
+      "cnvd": "",
+      "enabled": true
+    }
+  }
+}

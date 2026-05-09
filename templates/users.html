@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - 网络安全资产扫描系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-people me-2"></i>用户管理</h2>
+    <div class="breadcrumb-text">管理系统用户和权限</div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <button class="btn btn-scan" onclick="showAddUserModal()">
+            <i class="bi bi-person-plus me-2"></i>添加用户
+        </button>
+    </div>
+</div>
+
+<div class="card card-custom">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-custom table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>显示名称</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>最后登录</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>
+                            <i class="bi bi-person-circle me-1"></i>
+                            {{ user.username }}
+                        </td>
+                        <td>{{ user.display_name or '-' }}</td>
+                        <td>
+                            {% if user.role == 'admin' %}
+                            <span class="badge bg-danger">管理员</span>
+                            {% else %}
+                            <span class="badge bg-info">普通用户</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                            <span class="badge bg-success">启用</span>
+                            {% else %}
+                            <span class="badge bg-secondary">禁用</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_time }}</td>
+                        <td>{{ user.last_login or '从未登录' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.display_name }}', '{{ user.role }}', {{ user.is_active }})" title="编辑">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="resetPassword({{ user.id }}, '{{ user.username }}')" title="重置密码">
+                                    <i class="bi bi-key"></i>
+                                </button>
+                                {% if user.username != 'admin' %}
+                                <button class="btn btn-outline-danger" onclick="deleteUser({{ user.id }}, '{{ user.username }}')" title="删除">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 添加用户模态框 -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>添加用户</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="newUsername" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">密码 <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="newPassword" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">显示名称</label>
+                    <input type="text" class="form-control" id="newDisplayName">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">角色</label>
+                    <select class="form-select" id="newRole">
+                        <option value="user">普通用户</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addUser()">
+                    <i class="bi bi-check-lg me-1"></i>确认添加
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑用户模态框 -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>编辑用户</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserId">
+                <div class="mb-3">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="editUsername" disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">显示名称</label>
+                    <input type="text" class="form-control" id="editDisplayName">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">角色</label>
+                    <select class="form-select" id="editRole">
+                        <option value="user">普通用户</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="editIsActive">
+                        <label class="form-check-label" for="editIsActive">启用账户</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateUser()">
+                    <i class="bi bi-check-lg me-1"></i>保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 重置密码模态框 -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-key me-2"></i>重置密码</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="resetUserId">
+                <p>为用户 <strong id="resetUsername"></strong> 设置新密码：</p>
+                <div class="mb-3">
+                    <label class="form-label">新密码 <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="newResetPassword" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="confirmResetPassword()">
+                    <i class="bi bi-check-lg me-1"></i>确认重置
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 提示信息 -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toastMsg" class="toast align-items-center text-white border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="toastBody"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 显示提示
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastMsg');
+    const body = document.getElementById('toastBody');
+    toast.className = 'toast align-items-center text-white border-0 bg-' + type;
+    body.textContent = message;
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// 显示添加用户模态框
+function showAddUserModal() {
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('newDisplayName').value = '';
+    document.getElementById('newRole').value = 'user';
+    new bootstrap.Modal(document.getElementById('addUserModal')).show();
+}
+
+// 添加用户
+function addUser() {
+    const data = {
+        username: document.getElementById('newUsername').value,
+        password: document.getElementById('newPassword').value,
+        display_name: document.getElementById('newDisplayName').value,
+        role: document.getElementById('newRole').value
+    };
+    
+    if (!data.username || !data.password) {
+        showToast('用户名和密码不能为空', 'danger');
+        return;
+    }
+    
+    fetch('/api/users/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            showToast(result.message);
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    });
+}
+
+// 编辑用户
+function editUser(id, username, displayName, role, isActive) {
+    document.getElementById('editUserId').value = id;
+    document.getElementById('editUsername').value = username;
+    document.getElementById('editDisplayName').value = displayName;
+    document.getElementById('editRole').value = role;
+    document.getElementById('editIsActive').checked = isActive;
+    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+}
+
+// 更新用户
+function updateUser() {
+    const data = {
+        user_id: document.getElementById('editUserId').value,
+        display_name: document.getElementById('editDisplayName').value,
+        role: document.getElementById('editRole').value,
+        is_active: document.getElementById('editIsActive').checked
+    };
+    
+    fetch('/api/users/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            showToast(result.message);
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    });
+}
+
+// 删除用户
+function deleteUser(id, username) {
+    if (!confirm(`确定要删除用户 "${username}" 吗？`)) return;
+    
+    fetch('/api/users/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({user_id: id})
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            showToast(result.message);
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    });
+}
+
+// 重置密码
+function resetPassword(id, username) {
+    document.getElementById('resetUserId').value = id;
+    document.getElementById('resetUsername').textContent = username;
+    document.getElementById('newResetPassword').value = '';
+    new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
+}
+
+// 确认重置密码
+function confirmResetPassword() {
+    const data = {
+        user_id: document.getElementById('resetUserId').value,
+        password: document.getElementById('newResetPassword').value
+    };
+    
+    if (!data.password) {
+        showToast('请输入新密码', 'danger');
+        return;
+    }
+    
+    fetch('/api/users/reset-password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            showToast(result.message);
+            bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+        } else {
+            showToast(result.message, 'danger');
+        }
+    });
+}
+</script>
+{% endblock %}

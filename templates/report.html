@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}报告生成 - 网络安全资产扫描系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-file-earmark-text"></i> 安全报告</h2>
+    <div class="breadcrumb-text">生成和下载安全扫描报告</div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card card-custom h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="bi bi-file-earmark-pdf" style="font-size:64px;color:#e74c3c;"></i>
+                <h5 class="mt-3">生成HTML报告</h5>
+                <p class="text-muted">生成包含资产清单、漏洞详情、修复建议的完整安全报告</p>
+                <button class="btn btn-scan mt-2" onclick="generateReport()" id="genBtn">
+                    <i class="bi bi-gear"></i> 生成报告
+                </button>
+                <div id="reportResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card card-custom h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="bi bi-download" style="font-size:64px;color:#2980b9;"></i>
+                <h5 class="mt-3">下载报告</h5>
+                <p class="text-muted">下载最近一次生成的安全扫描报告文件</p>
+                <a href="javascript:void(0)" onclick="downloadReport()" class="btn btn-outline-primary mt-2" id="dlBtn">
+                    <i class="bi bi-download"></i> 下载报告
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateReport() {
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> 生成中...';
+    document.getElementById('reportResult').innerHTML = '';
+
+    fetch('/api/report/generate', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-gear"></i> 生成报告';
+            if (data.success) {
+                document.getElementById('reportResult').innerHTML =
+                    '<div class="alert alert-success"><i class="bi bi-check-circle"></i> ' + data.message +
+                    '</div><a href="javascript:void(0)" onclick="downloadReport()" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> 立即下载</a>';
+            } else {
+                document.getElementById('reportResult').innerHTML =
+                    '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> ' + data.message + '</div>';
+            }
+        });
+}
+
+function downloadReport() {
+    const btn = document.getElementById('dlBtn');
+    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> 准备中...';
+
+    // 先尝试下载，如果不存在则自动生成再下载
+    fetch('/api/report/download')
+        .then(resp => {
+            if (resp.ok) {
+                return resp.blob();
+            }
+            // 报告不存在，先生成
+            return fetch('/api/report/generate', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        return fetch('/api/report/download').then(r => r.blob());
+                    }
+                    throw new Error(data.message);
+                });
+        })
+        .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '安全扫描报告.html';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            btn.innerHTML = '<i class="bi bi-download"></i> 下载报告';
+        })
+        .catch(err => {
+            btn.innerHTML = '<i class="bi bi-download"></i> 下载报告';
+            alert('下载失败: ' + err.message);
+        });
+}
+</script>
+{% endblock %}
